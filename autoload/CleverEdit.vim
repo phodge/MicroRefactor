@@ -53,7 +53,11 @@ function! CleverEdit#go() " {{{
 		let l:char = char2nr('v')
 	elseif (l:pseudoFT == 'javascript') && (@" =~ '^[$A-Za-z_][$A-Za-z0-9_]*$')
 		let l:char = char2nr('v')
+	elseif (l:pseudoFT == 'typescript') && (@" =~ '^[$A-Za-z_][$A-Za-z0-9_]*$')
+		let l:char = char2nr('v')
 	elseif (l:pseudoFT == 'python') && (@" =~ '^\h\w*$')
+		let l:char = char2nr('v')
+	elseif (l:pseudoFT == 'scss') && (@" =~ '^\$\h\w*$')
 		let l:char = char2nr('v')
 	endif
 
@@ -352,10 +356,19 @@ function! <SID>SpecialOpUseVariableStart(pseudoFT) " {{{
 		let l:lineIsCommentMatch = '^\s*//'
 		let l:varLineAssignsMatch = '^\s*\%(\%(var\|let\|const\)\s\+\)\=%s\s*=\s*%s\s*;\=\s*$'
     let l:varDecl = 'var '
+	elseif a:pseudoFT == 'typescript'
+		let l:varMatch = '[$A-Za-z_][$A-Za-z0-9_]*'
+		let l:lineIsCommentMatch = '^\s*//'
+		let l:varLineAssignsMatch = '^\s*\%(\%(var\|let\|const\)\s\+\)\=%s\s*\%(:[^=]\+\)\==\s*%s\s*;\=\s*$'
+    let l:varDecl = 'let '
 	elseif a:pseudoFT == 'python'
 		let l:varMatch = '\h\w*'
 		let l:lineIsCommentMatch = '^\s*#'
 		let l:varLineAssignsMatch = '^\s*%s\s*=\s*%s\s*\%(#.*\)\=$'
+	elseif a:pseudoFT == 'scss'
+		let l:varMatch = '\$\h\w*'
+		let l:lineIsCommentMatch = '^\s*/[*/]'
+		let l:varLineAssignsMatch = '^\s*%s\s*:\s*%s\s*;\=\s*\%(//.*\)\=$'
 	else
 		" PHP
 		let l:varMatch = '\$\h\w*'
@@ -516,10 +529,12 @@ function! <SID>SpecialOpUseVariableEnd(pseudoFT, value) " {{{
 	" use a different pattern for VIM filetype:
 	if a:pseudoFT == 'vim'
 		let l:varname = matchstr(l:upto, '[glsbwta]:\h\w*$')
-	elseif a:pseudoFT == 'javascript'
+	elseif a:pseudoFT == 'javascript' || a:pseudoFT == 'typescript'
 		let l:varname = matchstr(l:upto, '\<\h\w*$')
 	elseif a:pseudoFT == 'python'
 		let l:varname = matchstr(l:upto, '\h\w*$')
+	elseif a:pseudoFT == 'scss'
+		let l:varname = matchstr(l:upto, '\$\h\w*$')
 	else
 		let l:varname = matchstr(l:upto, '\$\$\=\h\w*$')
 	endif
@@ -533,10 +548,12 @@ function! <SID>SpecialOpUseVariableEnd(pseudoFT, value) " {{{
 	" see if we can find a line with that variable being assigned
 	if a:pseudoFT == 'vim'
 		let l:assignPattern = '^\s*let\s\+' . escape(l:varname, '$[]') . '\s*=\s*$'
-	elseif a:pseudoFT == 'javascript'
-		let l:assignPattern = '^\s*\%(var\s\+\)\=' . l:varname . '\s*=\s*\%(;\s*\)\=$'
+	elseif a:pseudoFT == 'javascript' || a:pseudoFT == 'typescript'
+		let l:assignPattern = '^\s*\%(\%(var\|let\|const\)\s\+\)\=' . l:varname . '\s*=\s*\%(;\s*\)\=$'
 	elseif a:pseudoFT == 'python'
 		let l:assignPattern = '^\s*' . l:varname . '\s*=\s*\%(#.*\)\=$'
+	elseif a:pseudoFT == 'scss'
+		let l:assignPattern = '^\s*' . l:varname . '\s*:\s*;\=\s*\%(//.*\)\=$'
 	else
 		let l:assignPattern = '^\s*' . escape(l:varname, '$[]') . '\s*=\s*\%(;\s*\)\=$'
 	endif
@@ -578,8 +595,12 @@ function! <SID>SpecialOpUseVariableEnd(pseudoFT, value) " {{{
 		let l:newline = 'let %s = %s'
 	elseif a:pseudoFT == 'javascript'
 		let l:newline = 'var %s = %s;'
+	elseif a:pseudoFT == 'typescript'
+		let l:newline = 'let %s = %s;'
 	elseif a:pseudoFT == 'python'
 		let l:newline = '%s = %s'
+	elseif a:pseudoFT == 'scss'
+		let l:newline = '%s: %s;'
 	else
 		let l:newline = '%s = %s;'
 	endif
