@@ -59,6 +59,8 @@ function! CleverEdit#go() " {{{
 		let l:char = char2nr('v')
 	elseif (l:pseudoFT == 'scss') && (@" =~ '^\$\h\w*$')
 		let l:char = char2nr('v')
+	elseif (l:pseudoFT == 'lua') && (@" =~ '^\h\w*$')
+		let l:char = char2nr('v')
 	endif
 
 	let l:commands = [
@@ -369,6 +371,10 @@ function! <SID>SpecialOpUseVariableStart(pseudoFT) " {{{
 		let l:varMatch = '\$\h\w*'
 		let l:lineIsCommentMatch = '^\s*/[*/]'
 		let l:varLineAssignsMatch = '^\s*%s\s*:\s*%s\s*;\=\s*\%(//.*\)\=$'
+	elseif a:pseudoFT == 'lua'
+		let l:varMatch = '\h\w*'
+		let l:lineIsCommentMatch = '^\s*--'
+		let l:varLineAssignsMatch = '^\s*\%(local\s\+\)\=%s\s*=\s*%s\s*$'
 	else
 		" PHP
 		let l:varMatch = '\$\h\w*'
@@ -535,6 +541,8 @@ function! <SID>SpecialOpUseVariableEnd(pseudoFT, value) " {{{
 		let l:varname = matchstr(l:upto, '\h\w*$')
 	elseif a:pseudoFT == 'scss'
 		let l:varname = matchstr(l:upto, '\$\h\w*$')
+	elseif a:pseudoFT == 'lua'
+		let l:varname = matchstr(l:upto, '\h\w*$')
 	else
 		let l:varname = matchstr(l:upto, '\$\$\=\h\w*$')
 	endif
@@ -554,6 +562,8 @@ function! <SID>SpecialOpUseVariableEnd(pseudoFT, value) " {{{
 		let l:assignPattern = '^\s*' . l:varname . '\s*=\s*\%(#.*\)\=$'
 	elseif a:pseudoFT == 'scss'
 		let l:assignPattern = '^\s*' . l:varname . '\s*:\s*;\=\s*\%(//.*\)\=$'
+	elseif a:pseudoFT == 'lua'
+		let l:assignPattern = '^\s*\%(local\s*\)\=' . l:varname . '\s*=\s*\%(--.*\)\=$'
 	else
 		let l:assignPattern = '^\s*' . escape(l:varname, '$[]') . '\s*=\s*\%(;\s*\)\=$'
 	endif
@@ -601,6 +611,8 @@ function! <SID>SpecialOpUseVariableEnd(pseudoFT, value) " {{{
 		let l:newline = '%s = %s'
 	elseif a:pseudoFT == 'scss'
 		let l:newline = '%s: %s;'
+	elseif a:pseudoFT == 'lua'
+		let l:newline = 'local %s = %s'
 	else
 		let l:newline = '%s = %s;'
 	endif
